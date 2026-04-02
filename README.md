@@ -1,20 +1,22 @@
 # Trabajo Práctico - Middlewares Orientados a Mensajes
 
-Los middlewares orientados a mensajes (MOMs) son un recurso importante para el control de la complejidad en los sistemas distribuídos, puesto que permiten a las distintas partes del sistema comunicarse abstrayéndose de problemas como los cambios de ubicación, fallos, performance y escalabilidad.
+Esta entrega consiste en la implementación de work queue y exchange, componentes de RabbitMQ, utilizando la biblioteca Pika en Python. Las funciones implementadas para interactuar con el middleware son:
 
-En este repositorio se proveen conjuntos de pruebas para los dos formas más comunes de organización de la comunicación sobre colas, que en RabbitMQ se denominan Work Queues y Exchanges.
+`start_consuming(on_message_callback)`
 
-Se recomienda familiarizarse con estos conceptos leyendo la documentación de RabbitMQ y siguiendo los [tutoriales introductorios](https://www.rabbitmq.com/tutorials).
+`stop_consuming()`
 
-## Condiciones de Entrega
+`send(message)`
 
-El código de este repositorio se agrupa en dos carpetas, una para Python y otra para Golang. Los estudiantes deberán elegir **sólo uno** de estos lenguajes y completar la implementación de las interfaces de middleware provistas con el objetivo de pasar las pruebas asociadas.
+`close()`
 
-Al momento de la evaluación y ejecución de las pruebas se **descartarán** los cambios realizados a todos los archivos, a excepción de:
+En la implementación se optó por usar `channel.basic_qos(prefetch_count=1)` para lograr una distribución equitativa de mensajes, al evitar que un worker reciba un mensaje hasta que haya hecho el ACK del anterior, y se envía al siguiente que no está ocupado.
 
-**Python:** `/python/src/common/middleware/middleware_rabbitmq.py` 
+Para la work queue, se usa el exchange por default `exchange=''` para enviar el mensaje directamente a la cola.
 
-**Golang:** `/golang/internal/factory/*/*.go` 
+Se usó un exchange de tipo direct para enviar el mensaje a las colas cuyas binding keys sean iguales a las routing keys del mensaje.
+
+La implementación considera el manejo de errores, levantando la excepción correspondiente ante problemas de conexión o internos.
 
 ## Ejecución
 
@@ -25,17 +27,3 @@ Al momento de la evaluación y ejecución de las pruebas se **descartarán** los
 `make logs`: Sigue los logs de todos los contenedores en un solo flujo de salida.
 
 `make local`: Ejecuta las pruebas de integración desde el Host, facilitando el desarrollo. Se explica con mayor detalle dentro de su sección.
-
-## Pruebas locales desde el Host
-
-Habiendo iniciado el contenedor de RabbitMQ o configurado una instancia local del mismo pueden ejecutarse las pruebas sin necesidad de detener y reiniciar los contenedores ejecutando `make local`, siempre que se cumplan los siguientes requisitos.
-
-### Python
-Instalar una versión de Python superior a `3.14`. Se recomienda emplear un gestor de versiones, como ser `pyenv`.
-Instalar los dependencias de la suite de pruebas:
-`pip install -r python/src/tests/requirements.txt`
-
-### Golang
-Instalar una versión de Golang superior a `1.24`.
-Instalar los dependencias de la suite de pruebas:
-`go mod download`
