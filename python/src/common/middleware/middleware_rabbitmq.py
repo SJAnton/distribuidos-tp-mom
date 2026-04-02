@@ -20,7 +20,7 @@ class MessageMiddlewareQueueRabbitMQ(MessageMiddlewareQueue):
                 def ack():
                     ch.basic_ack(delivery_tag=method.delivery_tag)
                 def nack():
-                    ch.basic_nack(delivery_tag=method.delivery_tag)
+                    ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
                 on_message_callback(body, ack, nack)
 
             self.channel.basic_qos(prefetch_count=1)
@@ -88,7 +88,7 @@ class MessageMiddlewareExchangeRabbitMQ(MessageMiddlewareExchange):
                 def ack():
                     ch.basic_ack(delivery_tag=method.delivery_tag)
                 def nack():
-                    ch.basic_nack(delivery_tag=method.delivery_tag)
+                    ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
                 on_message_callback(body, ack, nack)
 
             self.channel.basic_qos(prefetch_count=1)
