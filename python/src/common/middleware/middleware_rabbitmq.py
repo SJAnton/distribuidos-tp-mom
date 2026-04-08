@@ -36,10 +36,11 @@ class MessageMiddlewareQueueRabbitMQ(MessageMiddlewareQueue):
             raise MessageMiddlewareMessageError()
 
     def stop_consuming(self):
+        if not self.consumer_tag:
+            return
         try:
-            if not self.consumer_tag:
-                return
             self.channel.basic_cancel(consumer_tag=self.consumer_tag)
+            self.consumer_tag = None
         except pika.exceptions.AMQPConnectionError:
             raise MessageMiddlewareDisconnectedError()
 
@@ -104,21 +105,23 @@ class MessageMiddlewareExchangeRabbitMQ(MessageMiddlewareExchange):
             raise MessageMiddlewareMessageError()
 
     def stop_consuming(self):
+        if not self.consumer_tag:
+            return
         try:
-            if not self.consumer_tag:
-                return
             self.channel.basic_cancel(consumer_tag=self.consumer_tag)
+            self.consumer_tag = None
         except pika.exceptions.AMQPConnectionError:
             raise MessageMiddlewareDisconnectedError()
 
     def send(self, message):
+        if len(self.routing_keys) != 1:
+            raise MessageMiddlewareMessageError()
         try:
-            for routing_key in self.routing_keys:
-                self.channel.basic_publish(
-                    exchange=self.exchange_name,
-                    routing_key=routing_key,
-                    body=message,
-                )
+            self.channel.basic_publish(
+                exchange=self.exchange_name,
+                routing_key=self.routing_keys[0],
+                body=message,
+            )
         except pika.exceptions.AMQPConnectionError:
             raise MessageMiddlewareDisconnectedError()
         except Exception:
